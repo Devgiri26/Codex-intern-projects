@@ -1,19 +1,40 @@
-document.getElementById("loginForm").addEventListener("submit", function (e) {
-  e.preventDefault(); // prevent actual form submission
+async function downloadSong() {
+  const link = document.getElementById("spotifyLink").value;
+  const resultDiv = document.getElementById("result");
 
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (username === "" || password === "") {
-    alert("Please fill in both username and password.");
+  if (!link.includes("spotify.com/track")) {
+    alert("Please enter a valid Spotify track link.");
     return;
   }
 
-  if (password.length < 6) {
-    alert("Password must be at least 6 characters long.");
-    return;
-  }
+  resultDiv.innerHTML = "Processing...";
 
-  // If everything is valid
-  alert("Login successful!\nUsername: " + username);
-});
+  try {
+    const response = await fetch("https://spotify-downloader3.p.rapidapi.com/download", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "X-RapidAPI-Key": "YOUR_RAPIDAPI_KEY",
+        "X-RapidAPI-Host": "spotify-downloader3.p.rapidapi.com"
+      },
+      body: JSON.stringify({
+        url: link
+      })
+    });
+
+    const data = await response.json();
+
+    if (data && data.link) {
+      resultDiv.innerHTML = `
+        <p>Download ready:</p>
+        <a href="${data.link}" target="_blank" download>Click to Download</a>
+      `;
+    } else {
+      resultDiv.innerHTML = "Song not found or API error.";
+    }
+
+  } catch (error) {
+    console.error(error);
+    resultDiv.innerHTML = "Error fetching download link.";
+  }
+}
